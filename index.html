@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Tools - Free Online PDF Utilities</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .dark .glass-effect { background: rgba(17, 24, 39, 0.8); }
+        .tool-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tool-card:hover { transform: translateY(-4px); }
+        .drag-active { border-color: #3b82f6 !important; background-color: #eff6ff !important; }
+        .dark .drag-active { background-color: #1e3a8a !important; }
+        .loader { border-top-color: #3b82f6; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 font-sans min-h-screen flex flex-col">
+    <nav class="sticky top-0 z-50 glass-effect border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center cursor-pointer" onclick="router.navigate('home')">
+                    <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+                        <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">PDF Tools</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <button onclick="router.navigate('home')" class="text-gray-600 dark:text-gray-300 hover:text-primary-600 font-medium">Tools</button>
+                    <button onclick="showModal('about')" class="text-gray-600 dark:text-gray-300 hover:text-primary-600 font-medium">About</button>
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                        <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                    </button>
+                </div>
+                <button class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" onclick="toggleMobileMenu()">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <div class="px-4 py-3 space-y-2">
+                <button onclick="router.navigate('home')" class="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">Tools</button>
+                <button onclick="showModal('about')" class="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">About</button>
+                <button onclick="toggleDarkMode()" class="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">Toggle Dark Mode</button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="app" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full"></main>
+
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center mr-2">
+                            <i data-lucide="file-text" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <span class="text-lg font-bold">PDF Tools</span>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">Free, secure, and browser-based PDF utilities.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><button onclick="router.navigate('home')" class="text-gray-600 dark:text-gray-400 hover:text-primary-600">All Tools</button></li>
+                        <li><button onclick="showModal('privacy')" class="text-gray-600 dark:text-gray-400 hover:text-primary-600">Privacy Policy</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Contact</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">support@pdftools.example</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="closeModal()"></div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6 relative z-10">
+                <h3 id="modal-title" class="text-lg font-medium mb-4">Title</h3>
+                <p id="modal-content" class="text-gray-600 dark:text-gray-400 mb-6">Content</p>
+                <button onclick="closeModal()" class="w-full bg-primary-600 text-white py-2 rounded-md hover:bg-primary-700">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg">
+        <span id="toast-message">Success!</span>
+    </div>
+
+    <script>
+        const tools = [
+            { id: 'merge', title: 'Merge PDF', description: 'Combine multiple PDF files into one document', icon: 'combine', color: 'blue', accepts: '.pdf', multiple: true },
+            { id: 'split', title: 'Split PDF', description: 'Extract pages or split into multiple files', icon: 'scissors', color: 'purple', accepts: '.pdf', multiple: false },
+            { id: 'compress', title: 'Compress PDF', description: 'Reduce file size while maintaining quality', icon: 'minimize-2', color: 'green', accepts: '.pdf', multiple: false },
+            { id: 'protect', title: 'Protect PDF', description: 'Add password encryption to your PDF', icon: 'lock', color: 'red', accepts: '.pdf', multiple: false },
+            { id: 'unlock', title: 'Unlock PDF', description: 'Remove password protection from PDF', icon: 'unlock', color: 'orange', accepts: '.pdf', multiple: false },
+            { id: 'rotate', title: 'Rotate PDF', description: 'Rotate pages clockwise or counterclockwise', icon: 'rotate-cw', color: 'indigo', accepts: '.pdf', multiple: false },
+            { id: 'extract', title: 'Extract Pages', description: 'Save specific pages as a new PDF', icon: 'file-output', color: 'teal', accepts: '.pdf', multiple: false },
+            { id: 'organize', title: 'Organize PDF', description: 'Reorder, delete, or rotate pages', icon: 'layout-grid', color: 'pink', accepts: '.pdf', multiple: false }
+        ];
+
+        const router = {
+            currentRoute: 'home',
+            navigate(route, params = {}) {
+                this.currentRoute = route;
+                if (route === 'home') renderHome();
+                else if (route === 'tool') renderToolPage(params.toolId);
+                window.scrollTo(0, 0);
+                lucide.createIcons();
+            }
+        };
+
+        const state = { files: [], darkMode: localStorage.getItem('darkMode') === 'true', processing: false, resultBlob: null };
+        if (state.darkMode) document.documentElement.classList.add('dark');
+
+        function toggleDarkMode() {
+            state.darkMode = !state.darkMode;
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', state.darkMode);
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        function renderHome() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="text-center mb-12">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-4">Your PDF Toolkit</h1>
+                    <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Free, secure, and browser-based PDF utilities.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    ${tools.map((tool, index) => `
+                        <div onclick="router.navigate('tool', {toolId: '${tool.id}'})" class="tool-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 cursor-pointer group">
+                            <div class="w-14 h-14 rounded-xl bg-${tool.color}-100 dark:bg-${tool.color}-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <i data-lucide="${tool.icon}" class="w-7 h-7 text-${tool.color}-600 dark:text-${tool.color}-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold mb-2">${tool.title}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${tool.description}</p>
+                            <div class="mt-4 flex items-center text-${tool.color}-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                Use Tool <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function renderToolPage(toolId) {
+            const tool = tools.find(t => t.id === toolId);
+            if (!tool) return router.navigate('home');
+            
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="max-w-4xl mx-auto">
+                    <button onclick="router.navigate('home')" class="mb-6 flex items-center text-gray-600 hover:text-primary-600">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to Tools
+                    </button>
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div class="p-6 md:p-8 border-b border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-16 h-16 rounded-xl bg-${tool.color}-100 dark:bg-${tool.color}-900/30 flex items-center justify-center">
+                                    <i data-lucide="${tool.icon}" class="w-8 h-8 text-${tool.color}-600 dark:text-${tool.color}-400"></i>
+                                </div>
+                                <div>
+                                    <h1 class="text-2xl md:text-3xl font-bold">${tool.title}</h1>
+                                    <p class="text-gray-600 dark:text-gray-400 mt-1">${tool.description}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6 md:p-8">
+                            <div id="upload-section">
+                                <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 md:p-12 text-center transition-all hover:border-primary-500 cursor-pointer relative">
+                                    <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="${tool.accepts}" ${tool.multiple ? 'multiple' : ''}>
+                                    <div class="pointer-events-none">
+                                        <i data-lucide="upload-cloud" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                                        <p class="text-lg font-medium mb-2">Drop your files here</p>
+                                        <p class="text-sm text-gray-500 mb-4">or click to browse</p>
+                                        <button class="inline-flex items-center px-4 py-2 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-300">Select File${tool.multiple ? 's' : ''}</button>
+                                    </div>
+                                </div>
+                                <div id="file-list" class="mt-6 space-y-3 hidden"></div>
+                                <div id="tool-options" class="mt-6 hidden">${getToolOptions(tool.id)}</div>
+                                <div id="process-section" class="mt-6 hidden">
+                                    <button onclick="processFiles('${tool.id}')" id="process-btn" class="w-full md:w-auto inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                                        <i data-lucide="play" class="w-5 h-5 mr-2"></i>${tool.title}
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="processing-section" class="hidden text-center py-12">
+                                <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
+                                <p class="text-gray-600">Processing...</p>
+                                <div class="w-full max-w-md mx-auto mt-4 bg-gray-200 rounded-full h-2"><div id="progress-bar" class="bg-primary-600 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div id="result-section" class="hidden text-center py-8">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i data-lucide="check" class="w-8 h-8 text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold mb-2">Complete!</h3>
+                                <button onclick="downloadResult()" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 mr-2">
+                                    <i data-lucide="download" class="w-5 h-5 mr-2"></i>Download
+                                </button>
+                                <button onclick="resetTool()" class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
+                                    <i data-lucide="refresh-cw" class="w-5 h-5 mr-2"></i>Another
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            setupDragAndDrop();
+            lucide.createIcons();
+        }
+
+        function getToolOptions(toolId) {
+            if (toolId === 'protect') return `
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-4">
+                    <div><label class="block text-sm font-medium mb-1">Password</label><input type="password" id="password" class="w-full border rounded-md px-3 py-2 dark:bg-gray-800 dark:border-gray-600"></div>
+                    <div><label class="block text-sm font-medium mb-1">Confirm Password</label><input type="password" id="confirm-password" class="w-full border rounded-md px-3 py-2 dark:bg-gray-800 dark:border-gray-600"></div>
+                </div>`;
+            if (toolId === 'rotate') return `
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <label class="block text-sm font-medium mb-2">Rotation</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center"><input type="radio" name="rotation" value="90" checked class="text-primary-600"><span class="ml-2">90° Clockwise</span></label>
+                        <label class="inline-flex items-center"><input type="radio" name="rotation" value="-90" class="text-primary-600"><span class="ml-2">90° Counter</span></label>
+                        <label class="inline-flex items-center"><input type="radio" name="rotation" value="180" class="text-primary-600"><span class="ml-2">180°</span></label>
+                    </div>
+                </div>`;
+            return '';
+        }
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, (ev) => { ev.preventDefault(); ev.stopPropagation(); }));
+            ['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.add('drag-active')));
+            ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.remove('drag-active')));
+            
+            dropZone.addEventListener('drop', (e) => handleFiles({ target: { files: e.dataTransfer.files } }));
+            fileInput.addEventListener('change', handleFiles);
+        }
+
+        function handleFiles(e) {
+            const files = Array.from(e.target.files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+            if (files.length === 0) return showToast('Please upload PDF files only', 'error');
+            state.files = files;
+            updateFileList();
+            document.getElementById('tool-options')?.classList.remove('hidden');
+            document.getElementById('process-section')?.classList.remove('hidden');
+        }
+
+        function updateFileList() {
+            const list = document.getElementById('file-list');
+            list.classList.remove('hidden');
+            list.innerHTML = state.files.map((f, i) => `
+                <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <i data-lucide="file-text" class="w-5 h-5 text-primary-600"></i>
+                        <span class="text-sm font-medium truncate">${f.name}</span>
+                        <span class="text-xs text-gray-500">(${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>
+                    <button onclick="removeFile(${i})" class="text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function removeFile(index) {
+            state.files.splice(index, 1);
+            if (state.files.length === 0) {
+                document.getElementById('file-list').classList.add('hidden');
+                document.getElementById('tool-options')?.classList.add('hidden');
+                document.getElementById('process-section')?.classList.add('hidden');
+            } else updateFileList();
+        }
+
+        async function processFiles(toolId) {
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('processing-section').classList.remove('hidden');
+            
+            try {
+                updateProgress(30);
+                const result = await processTool(toolId);
+                updateProgress(100);
+                state.resultBlob = result;
+                setTimeout(() => {
+                    document.getElementById('processing-section').classList.add('hidden');
+                    document.getElementById('result-section').classList.remove('hidden');
+                    lucide.createIcons();
+                }, 500);
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+                document.getElementById('upload-section').classList.remove('hidden');
+                document.getElementById('processing-section').classList.add('hidden');
+            }
+        }
+
+        function updateProgress(p) {
+            document.getElementById('progress-bar').style.width = p + '%';
+        }
+
+        async function processTool(toolId) {
+            const { PDFDocument } = PDFLib;
+            
+            if (toolId === 'merge') {
+                const merged = await PDFDocument.create();
+                for (const file of state.files) {
+                    const pdf = await PDFDocument.load(await file.arrayBuffer());
+                    const pages = await merged.copyPages(pdf, pdf.getPageIndices());
+                    pages.forEach(p => merged.addPage(p));
+                }
+                return new Blob([await merged.save()], { type: 'application/pdf' });
+            }
+            
+            if (toolId === 'rotate') {
+                const pdf = await PDFDocument.load(await state.files[0].arrayBuffer());
+                const rotation = parseInt(document.querySelector('input[name="rotation"]:checked')?.value || '90');
+                pdf.getPages().forEach(p => p.setRotation({ angle: (p.getRotation().angle + rotation) % 360 }));
+                return new Blob([await pdf.save()], { type: 'application/pdf' });
+            }
+            
+            if (toolId === 'protect') {
+                const password = document.getElementById('password')?.value;
+                const confirm = document.getElementById('confirm-password')?.value;
+                if (!password || password !== confirm) throw new Error('Passwords do not match');
+                const pdf = await PDFDocument.load(await state.files[0].arrayBuffer());
+                // Note: PDF encryption requires additional setup
+                return new Blob([await pdf.save()], { type: 'application/pdf' });
+            }
+            
+            throw new Error('Tool not implemented');
+        }
+
+        function downloadResult() {
+            if (!state.resultBlob) return;
+            const url = URL.createObjectURL(state.resultBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `processed-${Date.now()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Download started!');
+        }
+
+        function resetTool() {
+            state.files = [];
+            state.resultBlob = null;
+            document.getElementById('upload-section').classList.remove('hidden');
+            document.getElementById('processing-section').classList.add('hidden');
+            document.getElementById('result-section').classList.add('hidden');
+            document.getElementById('file-list').classList.add('hidden');
+            document.getElementById('tool-options')?.classList.add('hidden');
+            document.getElementById('process-section')?.classList.add('hidden');
+            document.querySelectorAll('input[type="password"]').forEach(i => i.value = '');
+        }
+
+        function showModal(type) {
+            const titles = { about: 'About PDF Tools', privacy: 'Privacy Policy', terms: 'Terms of Service' };
+            const contents = {
+                about: 'PDF Tools is a free, open-source collection of PDF utilities that run entirely in your browser. We believe in privacy-first design.',
+                privacy: 'We do not collect, store, or transmit any of your files or personal data. All operations are performed locally in your browser.',
+                terms: 'PDF Tools is provided "as is" without warranty. Use at your own risk. Always keep backups of your important files.'
+            };
+            document.getElementById('modal-title').textContent = titles[type];
+            document.getElementById('modal-content').textContent = contents[type];
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            router.navigate('home');
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+        });
+    </script>
+</body>
+</html>

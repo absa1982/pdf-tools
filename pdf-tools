@@ -1,0 +1,7 @@
+# After creating empty repo on website
+git clone https://github.com/YOUR_USERNAME/pdf-tools.git
+cd pdf-tools
+# Copy your index.html here
+git add index.html
+git commit -m "Add PDF Tools application"
+git push
